@@ -1,6 +1,6 @@
 {
-  "name": "Abertura de Chamados - Novos Clientes",
-  "short_name": "Chamados",
+  "name": "Cadastro Novos Clientes",
+  "short_name": "Cadastro Clientes",
   "description": "Sistema de abertura de chamados para novos clientes",
   "start_url": "./index.html",
   "display": "standalone",
@@ -21,3 +21,4 @@
   ],
   "categories": ["business", "productivity"]
 }
+
