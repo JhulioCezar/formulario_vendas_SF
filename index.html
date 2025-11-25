@@ -1034,16 +1034,21 @@
             });
         }
 
-        // Funções para upload de imagem
+        // Funções para upload de imagem - CORRIGIDAS
         function openCamera(formType) {
             const fileInput = formType === 'boleto' 
                 ? document.getElementById('documento_imagem_boleto') 
                 : document.getElementById('documento_imagem');
             
-            // Remove o atributo capture para permitir escolha
-            fileInput.removeAttribute('capture');
+            // Para câmera, usar capture
+            fileInput.setAttribute('capture', 'environment');
             fileInput.setAttribute('accept', 'image/*');
             fileInput.click();
+            
+            // Resetar após o clique para não afetar próximos usos
+            setTimeout(() => {
+                fileInput.removeAttribute('capture');
+            }, 100);
         }
 
         function openFileInput(formType) {
@@ -1051,7 +1056,7 @@
                 ? document.getElementById('documento_imagem_boleto') 
                 : document.getElementById('documento_imagem');
             
-            // Para arquivo, não usa camera
+            // Para arquivo, não usar capture
             fileInput.removeAttribute('capture');
             fileInput.setAttribute('accept', 'image/*');
             fileInput.click();
@@ -1071,8 +1076,12 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById(previewId).src = e.target.result;
-                    document.getElementById(previewId).style.display = 'block';
+                    const preview = document.getElementById(previewId);
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    
+                    // Resetar o input file para permitir selecionar a mesma imagem novamente
+                    event.target.value = '';
                 }
                 reader.readAsDataURL(file);
             }
