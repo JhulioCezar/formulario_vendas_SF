@@ -208,6 +208,36 @@
             background-color: #f0f9f0;
         }
         
+        .image-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .image-option-btn {
+            padding: 10px 15px;
+            border: 2px solid #2196F3;
+            border-radius: 6px;
+            background-color: white;
+            color: #2196F3;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .image-option-btn:hover {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .hidden-file-input {
+            display: none;
+        }
+        
         .image-preview {
             max-width: 100%;
             max-height: 200px;
@@ -420,6 +450,14 @@
             h1 {
                 font-size: 24px;
             }
+            
+            .image-options {
+                flex-direction: column;
+            }
+            
+            .image-option-btn {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -481,7 +519,16 @@
                 <div class="form-group">
                     <label for="documento_imagem">Imagem do Documento:</label>
                     <div class="image-upload">
-                        <input type="file" id="documento_imagem" name="documento_imagem" accept="image/*" capture="camera">
+                        <p>Selecione a origem da imagem:</p>
+                        <div class="image-options">
+                            <button type="button" class="image-option-btn" onclick="openCamera('debito')">
+                                📷 Câmera
+                            </button>
+                            <button type="button" class="image-option-btn" onclick="openFileInput('debito')">
+                                📁 Arquivo
+                            </button>
+                        </div>
+                        <input type="file" id="documento_imagem" class="hidden-file-input" name="documento_imagem" accept="image/*">
                         <img id="documento_preview" class="image-preview" src="#" alt="Prévia do documento">
                     </div>
                 </div>
@@ -711,7 +758,16 @@
                 <div class="form-group">
                     <label for="documento_imagem_boleto">Imagem do Documento:</label>
                     <div class="image-upload">
-                        <input type="file" id="documento_imagem_boleto" name="documento_imagem_boleto" accept="image/*" capture="camera">
+                        <p>Selecione a origem da imagem:</p>
+                        <div class="image-options">
+                            <button type="button" class="image-option-btn" onclick="openCamera('boleto')">
+                                📷 Câmera
+                            </button>
+                            <button type="button" class="image-option-btn" onclick="openFileInput('boleto')">
+                                📁 Arquivo
+                            </button>
+                        </div>
+                        <input type="file" id="documento_imagem_boleto" class="hidden-file-input" name="documento_imagem_boleto" accept="image/*">
                         <img id="documento_preview_boleto" class="image-preview" src="#" alt="Prévia do documento">
                     </div>
                 </div>
@@ -978,6 +1034,50 @@
             });
         }
 
+        // Funções para upload de imagem
+        function openCamera(formType) {
+            const fileInput = formType === 'boleto' 
+                ? document.getElementById('documento_imagem_boleto') 
+                : document.getElementById('documento_imagem');
+            
+            // Remove o atributo capture para permitir escolha
+            fileInput.removeAttribute('capture');
+            fileInput.setAttribute('accept', 'image/*');
+            fileInput.click();
+        }
+
+        function openFileInput(formType) {
+            const fileInput = formType === 'boleto' 
+                ? document.getElementById('documento_imagem_boleto') 
+                : document.getElementById('documento_imagem');
+            
+            // Para arquivo, não usa camera
+            fileInput.removeAttribute('capture');
+            fileInput.setAttribute('accept', 'image/*');
+            fileInput.click();
+        }
+
+        // Configurar eventos de change para os file inputs
+        document.getElementById('documento_imagem').addEventListener('change', function(e) {
+            handleImageUpload(e, 'documento_preview');
+        });
+
+        document.getElementById('documento_imagem_boleto').addEventListener('change', function(e) {
+            handleImageUpload(e, 'documento_preview_boleto');
+        });
+
+        function handleImageUpload(event, previewId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(previewId).src = e.target.result;
+                    document.getElementById(previewId).style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         // Alternar entre as opções de pagamento
         document.querySelectorAll('.payment-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -1170,31 +1270,6 @@
                     this.value = capitalizeWords(this.value);
                 }
             });
-        });
-        
-        // Pré-visualização de imagem do documento
-        document.getElementById('documento_imagem').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('documento_preview').src = e.target.result;
-                    document.getElementById('documento_preview').style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        document.getElementById('documento_imagem_boleto').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('documento_preview_boleto').src = e.target.result;
-                    document.getElementById('documento_preview_boleto').style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            }
         });
         
         // Função para obter localização via GPS - CORRIGIDA
