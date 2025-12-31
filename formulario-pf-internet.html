@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="description" content="Sistema de abertura de chamados para novos clientes">
+    <title>Abertura de Chamados - Novos Clientes</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="android-icon-192x192.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .logo img {
+            max-width: 220px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 15px;
+            font-size: 28px;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, #4CAF50, #2196F3);
+            border-radius: 3px;
+        }
+        
+        .payment-options {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+        
+        .payment-option {
+            padding: 12px 25px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            transition: all 0.3s;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+            max-width: 200px;
+        }
+        
+        .payment-option.active {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-color: #4CAF50;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .form-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-section.active {
+            display: block;
+        }
+        
+        .section-title {
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            padding: 12px 15px;
+            margin: 25px 0 18px;
+            border-left: 5px solid #4CAF50;
+            font-weight: 600;
+            border-radius: 0 8px 8px 0;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #fafafa;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            background-color: white;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-group input {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .gps-button {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .gps-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        .gps-button:active {
+            transform: translateY(0);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .copy-btn, .save-btn, .clear-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.3);
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .clear-btn {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .clear-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255, 152, 0, 0.3);
+        }
+        
+        .required::after {
+            content: " *";
+            color: #f44336;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            color: #2196F3;
+            font-style: italic;
+            margin-top: 8px;
+            text-align: center;
+            padding: 8px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+        }
+        
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .app-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .install-btn, .update-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .install-btn {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+        }
+        
+        .update-btn {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+            color: white;
+        }
+        
+        .install-btn:hover, .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .success-message {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .validation-error {
+            border-color: #f44336 !important;
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2) !important;
+        }
+        
+        .map-link {
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border: 1px solid #2196F3;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .map-link:hover {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .whatsapp-confirm {
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .whatsapp-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .whatsapp-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .whatsapp-yes {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .whatsapp-no {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .whatsapp-btn:hover {
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .payment-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .payment-option {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .image-options {
+                flex-direction: column;
+            }
+            
+            .image-option-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="https://i.imgur.com/SEr4lkm.png" alt="Logomarca">
+        </div>
+        
+        <h1>Abertura de Chamados - Novos Clientes</h1>
+        
+        <div class="app-controls">
+            <button class="install-btn" id="installButton" style="display: none;">
+                📲 Instalar App
+            </button>
+            <button class="update-btn" id="updateButton" style="display: none;">
+                🔄 Atualizar App
+            </button>
+        </div>
+        
+        <div class="payment-options">
+            <div class="payment-option active" data-target="debito">Débito em Conta</div>
+            <div class="payment-option" data-target="boleto">Boleto</div>
+        </div>
+        
+        <form id="chamadoForm">
+            <!-- Formulário para Débito em Conta -->
+            <div id="debito" class="form-section active">
+                <div class="section-title">Dados Pessoais</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome" class="required">Nome:</label>
+                        <input type="text" id="nome" name="nome" required minlength="3" maxlength="100">
+                        <div class="error-message" id="nome-error">Nome deve ter pelo menos 3 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cpf" class="required">CPF:</label>
+                        <input type="text" id="cpf" name="cpf" required pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00" inputmode="numeric">
+                        <div class="error-message" id="cpf-error">CPF deve estar no formato 000.000.000-00</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rg" class="required">RG:</label>
+                        <input type="text" id="rg" name="rg" required minlength="5" maxlength="20">
+                        <div class="error-message" id="rg-error">RG deve ter entre 5 e 20 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data_nascimento" class="required">Data de Nascimento:</label>
+                        <input type="text" id="data_nascimento" name="data_nascimento" required placeholder="DD/MM/AAAA" pattern="\d{2}/\d{2}/\d{4}" onfocus="(this.type='text')" onblur="formatDate(this)">
+                        <div class="error-message" id="data_nascimento-error">Data de nascimento inválida. Cliente deve ter 18 anos ou mais.</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">Endereço do Cliente</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cep" class="required">CEP:</label>
+                        <input type="text" id="cep" name="cep" required pattern="\d{5}-\d{3}" placeholder="00000-000" inputmode="numeric">
+                        <div class="error-message" id="cep-error">CEP deve estar no formato 00000-000</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="numero" class="required">Número:</label>
+                        <input type="text" id="numero" name="numero" required minlength="1" maxlength="10">
+                        <div class="error-message" id="numero-error">Número é obrigatório</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="gps-button" id="gps_button">
+                        📍 Usar GPS para preencher endereço
+                    </button>
+                    <div id="loading" class="loading">Buscando endereço...</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="endereco" class="required">Endereço:</label>
+                        <input type="text" id="endereco" name="endereco" required minlength="5" maxlength="200">
+                        <div class="error-message" id="endereco-error">Endereço é obrigatório</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bairro" class="required">Bairro:</label>
+                        <input type="text" id="bairro" name="bairro" required minlength="2" maxlength="100">
+                        <div class="error-message" id="bairro-error">Bairro é obrigatório</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cidade" class="required">Cidade:</label>
+                        <input type="text" id="cidade" name="cidade" required minlength="2" maxlength="100">
+                        <div class="error-message" id="cidade-error">Cidade é obrigatória</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ponto_referencia">Ponto de Referência:</label>
+                        <input type="text" id="ponto_referencia" name="ponto_referencia" maxlength="200">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="coordenadas">Coordenadas:</label>
+                        <input type="text" id="coordenadas" name="coordenadas" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="localizacao_mapa">Localização (Link do Mapa):</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="localizacao_mapa" name="localizacao_mapa" readonly style="flex: 1;">
+                            <a href="#" id="map_link" class="map-link" target="_blank" style="display: none;">🗺️ Abrir Mapa</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-title">Informações de Contato</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefone_principal" class="required">Telefone Principal:</label>
+                        <input type="tel" id="telefone_principal" name="telefone_principal" required pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="telefone_principal-error">Telefone deve estar no formato (00) 00000-0000</div>
+                        <div class="whatsapp-confirm" id="whatsapp_confirm" style="display: none;">
+                            <p style="margin: 0 0 8px 0; font-size: 14px;">Este número é do WhatsApp?</p>
+                            <div class="whatsapp-buttons">
+                                <button type="button" class="whatsapp-btn whatsapp-yes" onclick="copyToWhatsApp(true)">Sim</button>
+                                <button type="button" class="whatsapp-btn whatsapp-no" onclick="copyToWhatsApp(false)">Não</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="whatsapp_principal" class="required">WhatsApp Principal:</label>
+                        <input type="tel" id="whatsapp_principal" name="whatsapp_principal" required pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="whatsapp_principal-error">WhatsApp deve estar no formato (00) 00000-0000</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefone_secundario">Telefone Secundário:</label>
+                        <input type="tel" id="telefone_secundario" name="telefone_secundario" pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="telefone_secundario-error">Telefone deve estar no formato (00) 00000-0000</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="whatsapp_secundario">WhatsApp Secundário:</label>
+                        <input type="tel" id="whatsapp_secundario" name="whatsapp_secundario" pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="whatsapp_secundario-error">WhatsApp deve estar no formato (00) 00000-0000</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="required">E-mail:</label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="error-message" id="email-error">E-mail deve ser válido</div>
+                </div>
+                
+                <div class="section-title">Informações de Cobrança Banco do Brasil</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="agencia" class="required">Agência:</label>
+                        <input type="text" id="agencia" name="agencia" required minlength="3" maxlength="10" inputmode="numeric">
+                        <div class="error-message" id="agencia-error">Agência é obrigatória</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="conta" class="required">Conta:</label>
+                        <input type="text" id="conta" name="conta" required minlength="3" maxlength="15" inputmode="numeric">
+                        <div class="error-message" id="conta-error">Conta é obrigatória</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vencimento_debito" class="required">Vencimento:</label>
+                    <select id="vencimento_debito" name="vencimento_debito" required>
+                        <option value="">Selecione o dia</option>
+                        <option value="05">Dia 05</option>
+                        <option value="10">Dia 10</option>
+                        <option value="15">Dia 15</option>
+                        <option value="20">Dia 20</option>
+                        <option value="25">Dia 25</option>
+                    </select>
+                    <div class="error-message" id="vencimento_debito-error">Vencimento é obrigatório</div>
+                </div>
+                
+                <div class="section-title">Outros</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fidelidade" class="required">Aceita a Fidelidade:</label>
+                        <select id="fidelidade" name="fidelidade" required>
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                        <div class="error-message" id="fidelidade-error">Selecione uma opção</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa_instalacao" class="required">Taxa de Instalação:</label>
+                        <input type="text" id="taxa_instalacao" name="taxa_instalacao" required placeholder="R$ 0,00" inputmode="decimal">
+                        <div class="error-message" id="taxa_instalacao-error">Taxa de instalação é obrigatória</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="operadora">Operadora:</label>
+                        <input type="text" id="operadora" name="operadora" minlength="2" maxlength="50">
+                        <div class="error-message" id="operadora-error">Operadora deve ter pelo menos 2 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_caixa">ID da Caixa:</label>
+                        <input type="text" id="id_caixa" name="id_caixa" minlength="2" maxlength="50">
+                        <div class="error-message" id="id_caixa-error">ID da Caixa deve ter pelo menos 2 caracteres</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plano" class="required">Plano:</label>
+                        <select id="plano" name="plano" required>
+                            <option value="">Selecione</option>
+                            <option value="700MB - R$ 99,90">700MB - R$ 99,90</option>
+                            <option value="900MB - R$ 149,90">900MB - R$ 149,90</option>
+                        </select>
+                        <div class="error-message" id="plano-error">Selecione um plano</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vendedor" class="required">Vendedor:</label>
+                        <input type="text" id="vendedor" name="vendedor" required minlength="2" maxlength="100">
+                        <div class="error-message" id="vendedor-error">Vendedor é obrigatório</div>
+                    </div>
+                </div>
+                
+                <!-- NOVO CAMPO ADICIONADO AQUI -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inserir_rede_mesh" class="required">Inserir rede mesh:</label>
+                        <select id="inserir_rede_mesh" name="inserir_rede_mesh" required>
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                        <div class="error-message" id="inserir_rede_mesh-error">Selecione uma opção</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulário para Boleto -->
+            <div id="boleto" class="form-section">
+                <div class="section-title">Dados Pessoais</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome_boleto" class="required">Nome:</label>
+                        <input type="text" id="nome_boleto" name="nome_boleto" required minlength="3" maxlength="100">
+                        <div class="error-message" id="nome_boleto-error">Nome deve ter pelo menos 3 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cpf_boleto" class="required">CPF:</label>
+                        <input type="text" id="cpf_boleto" name="cpf_boleto" required pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" placeholder="000.000.000-00" inputmode="numeric">
+                        <div class="error-message" id="cpf_boleto-error">CPF deve estar no formato 000.000.000-00</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rg_boleto" class="required">RG:</label>
+                        <input type="text" id="rg_boleto" name="rg_boleto" required minlength="5" maxlength="20">
+                        <div class="error-message" id="rg_boleto-error">RG deve ter entre 5 e 20 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data_nascimento_boleto" class="required">Data de Nascimento:</label>
+                        <input type="text" id="data_nascimento_boleto" name="data_nascimento_boleto" required placeholder="DD/MM/AAAA" pattern="\d{2}/\d{2}/\d{4}" onfocus="(this.type='text')" onblur="formatDate(this)">
+                        <div class="error-message" id="data_nascimento_boleto-error">Data de nascimento inválida. Cliente deve ter 18 anos ou mais.</div>
+                    </div>
+                </div>
+                
+                <div class="section-title">Endereço do Cliente</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cep_boleto" class="required">CEP:</label>
+                        <input type="text" id="cep_boleto" name="cep_boleto" required pattern="\d{5}-\d{3}" placeholder="00000-000" inputmode="numeric">
+                        <div class="error-message" id="cep_boleto-error">CEP deve estar no formato 00000-000</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="numero_boleto" class="required">Número:</label>
+                        <input type="text" id="numero_boleto" name="numero_boleto" required minlength="1" maxlength="10">
+                        <div class="error-message" id="numero_boleto-error">Número é obrigatório</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="gps-button" id="gps_button_boleto">
+                        📍 Usar GPS para preencher endereço
+                    </button>
+                    <div id="loading_boleto" class="loading">Buscando endereço...</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="endereco_boleto" class="required">Endereço:</label>
+                        <input type="text" id="endereco_boleto" name="endereco_boleto" required minlength="5" maxlength="200">
+                        <div class="error-message" id="endereco_boleto-error">Endereço é obrigatório</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bairro_boleto" class="required">Bairro:</label>
+                        <input type="text" id="bairro_boleto" name="bairro_boleto" required minlength="2" maxlength="100">
+                        <div class="error-message" id="bairro_boleto-error">Bairro é obrigatório</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cidade_boleto" class="required">Cidade:</label>
+                        <input type="text" id="cidade_boleto" name="cidade_boleto" required minlength="2" maxlength="100">
+                        <div class="error-message" id="cidade_boleto-error">Cidade é obrigatória</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ponto_referencia_boleto">Ponto de Referência:</label>
+                        <input type="text" id="ponto_referencia_boleto" name="ponto_referencia_boleto" maxlength="200">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="coordenadas_boleto">Coordenadas:</label>
+                        <input type="text" id="coordenadas_boleto" name="coordenadas_boleto" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="localizacao_mapa_boleto">Localização (Link do Mapa):</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="localizacao_mapa_boleto" name="localizacao_mapa_boleto" readonly style="flex: 1;">
+                            <a href="#" id="map_link_boleto" class="map-link" target="_blank" style="display: none;">🗺️ Abrir Mapa</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-title">Informações de Contato</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefone_principal_boleto" class="required">Telefone Principal:</label>
+                        <input type="tel" id="telefone_principal_boleto" name="telefone_principal_boleto" required pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="telefone_principal_boleto-error">Telefone deve estar no formato (00) 00000-0000</div>
+                        <div class="whatsapp-confirm" id="whatsapp_confirm_boleto" style="display: none;">
+                            <p style="margin: 0 0 8px 0; font-size: 14px;">Este número é do WhatsApp?</p>
+                            <div class="whatsapp-buttons">
+                                <button type="button" class="whatsapp-btn whatsapp-yes" onclick="copyToWhatsAppBoleto(true)">Sim</button>
+                                <button type="button" class="whatsapp-btn whatsapp-no" onclick="copyToWhatsAppBoleto(false)">Não</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="whatsapp_principal_boleto" class="required">WhatsApp Principal:</label>
+                        <input type="tel" id="whatsapp_principal_boleto" name="whatsapp_principal_boleto" required pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="whatsapp_principal_boleto-error">WhatsApp deve estar no formato (00) 00000-0000</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefone_secundario_boleto">Telefone Secundário:</label>
+                        <input type="tel" id="telefone_secundario_boleto" name="telefone_secundario_boleto" pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="telefone_secundario_boleto-error">Telefone deve estar no formato (00) 00000-0000</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="whatsapp_secundario_boleto">WhatsApp Secundário:</label>
+                        <input type="tel" id="whatsapp_secundario_boleto" name="whatsapp_secundario_boleto" pattern="\(\d{2}\) \d{5}-\d{4}" placeholder="(00) 00000-0000" inputmode="numeric">
+                        <div class="error-message" id="whatsapp_secundario_boleto-error">WhatsApp deve estar no formato (00) 00000-0000</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email_boleto" class="required">E-mail:</label>
+                    <input type="email" id="email_boleto" name="email_boleto" required>
+                    <div class="error-message" id="email_boleto-error">E-mail deve ser válido</div>
+                </div>
+                
+                <div class="section-title">Informações de Cobrança</div>
+                
+                <div class="form-group">
+                    <label for="vencimento_boleto" class="required">Vencimento:</label>
+                    <select id="vencimento_boleto" name="vencimento_boleto" required>
+                        <option value="">Selecione o dia</option>
+                        <option value="01">Dia 01</option>
+                        <option value="05">Dia 05</option>
+                        <option value="08">Dia 08</option>
+                        <option value="10">Dia 10</option>
+                        <option value="12">Dia 12</option>
+                        <option value="15">Dia 15</option>
+                        <option value="20">Dia 20</option>
+                    </select>
+                    <div class="error-message" id="vencimento_boleto-error">Vencimento é obrigatório</div>
+                </div>
+                
+                <div class="section-title">Outros</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fidelidade_boleto" class="required">Aceita a Fidelidade:</label>
+                        <select id="fidelidade_boleto" name="fidelidade_boleto" required>
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                        <div class="error-message" id="fidelidade_boleto-error">Selecione uma opção</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxa_instalacao_boleto" class="required">Taxa de Instalação:</label>
+                        <input type="text" id="taxa_instalacao_boleto" name="taxa_instalacao_boleto" required placeholder="R$ 0,00" inputmode="decimal">
+                        <div class="error-message" id="taxa_instalacao_boleto-error">Taxa de instalação é obrigatória</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="operadora_boleto">Operadora:</label>
+                        <input type="text" id="operadora_boleto" name="operadora_boleto" minlength="2" maxlength="50">
+                        <div class="error-message" id="operadora_boleto-error">Operadora deve ter pelo menos 2 caracteres</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_caixa_boleto">ID da Caixa:</label>
+                        <input type="text" id="id_caixa_boleto" name="id_caixa_boleto" minlength="2" maxlength="50">
+                        <div class="error-message" id="id_caixa_boleto-error">ID da Caixa deve ter pelo menos 2 caracteres</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plano_boleto" class="required">Plano:</label>
+                        <select id="plano_boleto" name="plano_boleto" required>
+                            <option value="">Selecione</option>
+                            <option value="700MB - R$ 119,90">700MB - R$ 119,90</option>
+                            <option value="900MB - R$ 169,90">900MB - R$ 169,90</option>
+                        </select>
+                        <div class="error-message" id="plano_boleto-error">Selecione um plano</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vendedor_boleto" class="required">Vendedor:</label>
+                        <input type="text" id="vendedor_boleto" name="vendedor_boleto" required minlength="2" maxlength="100">
+                        <div class="error-message" id="vendedor_boleto-error">Vendedor é obrigatório</div>
+                    </div>
+                </div>
+                
+                <!-- NOVO CAMPO ADICIONADO AQUI -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inserir_rede_mesh_boleto" class="required">Inserir rede mesh:</label>
+                        <select id="inserir_rede_mesh_boleto" name="inserir_rede_mesh_boleto" required>
+                            <option value="">Selecione</option>
+                            <option value="sim">Sim</option>
+                            <option value="nao">Não</option>
+                        </select>
+                        <div class="error-message" id="inserir_rede_mesh_boleto-error">Selecione uma opção</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="success-message" id="successMessage">
+                ✅ Dados copiados com sucesso! Agora você pode colar no WhatsApp.
+            </div>
+            
+            <div class="action-buttons">
+                <button type="button" class="copy-btn" id="copyButton">
+                    📋 Copiar
+                </button>
+                <button type="button" class="save-btn" id="saveButton">
+                    💾 Salvar PDF
+                </button>
+                <button type="button" class="clear-btn" id="clearButton">
+                    🗑️ Limpar Formulário
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            installButton.addEventListener('click', () => {
+                installButton.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        // Check for updates
+        const updateButton = document.getElementById('updateButton');
+        let waitingWorker = null;
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                window.location.reload();
+            });
+
+            navigator.serviceWorker.register('service-worker.js').then(registration => {
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            updateButton.style.display = 'block';
+                            waitingWorker = newWorker;
+                        }
+                    });
+                });
+            });
+
+            updateButton.addEventListener('click', () => {
+                if (waitingWorker) {
+                    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+                updateButton.style.display = 'none';
+            });
+        }
+
+        // Alternar entre as opções de pagamento
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remover classe ativa de todas as opções
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                
+                // Adicionar classe ativa à opção clicada
+                this.classList.add('active');
+                
+                // Esconder todos os formulários
+                document.querySelectorAll('.form-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Mostrar o formulário correspondente
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
+        
+        // Formatação automática do CPF
+        function formatCPF(cpf) {
+            cpf = cpf.replace(/\D/g, '');
+            cpf = cpf.replace(/(\d{3})(\d)/, '$1.$2');
+            cpf = cpf.replace(/(\d{3})(\d)/, '$1.$2');
+            cpf = cpf.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            return cpf;
+        }
+        
+        // Formatação automática do CEP
+        function formatCEP(cep) {
+            cep = cep.replace(/\D/g, '');
+            cep = cep.replace(/^(\d{5})(\d)/, '$1-$2');
+            return cep;
+        }
+        
+        // Formatação automática do telefone
+        function formatPhone(phone) {
+            phone = phone.replace(/\D/g, '');
+            phone = phone.replace(/^(\d{2})(\d)/g, '($1) $2');
+            phone = phone.replace(/(\d{5})(\d)/, '$1-$2');
+            return phone;
+        }
+        
+        // Formatação automática da taxa de instalação
+        function formatCurrency(value) {
+            value = value.replace(/\D/g, '');
+            if (value === '') return 'R$ 0,00';
+            value = (parseInt(value) / 100).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            return 'R$ ' + value;
+        }
+        
+        // Formatação de data com validação de 18 anos ou mais
+        function formatDate(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5, 9);
+            }
+            input.value = value;
+            
+            // Validação da data - 18 anos ou mais
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (dateRegex.test(value)) {
+                const [, day, month, year] = value.match(dateRegex);
+                const birthDate = new Date(`${year}-${month}-${day}`);
+                
+                // Calcular data limite (18 anos atrás a partir do ano atual)
+                const currentDate = new Date();
+                const minDate = new Date();
+                minDate.setFullYear(currentDate.getFullYear() - 18);
+                
+                if (birthDate > minDate) {
+                    input.classList.add('validation-error');
+                    document.getElementById(input.id + '-error').style.display = 'block';
+                    document.getElementById(input.id + '-error').textContent = 'Data de nascimento inválida. Cliente deve ter 18 anos ou mais.';
+                } else {
+                    input.classList.remove('validation-error');
+                    document.getElementById(input.id + '-error').style.display = 'none';
+                }
+            }
+        }
+        
+        // Aplicar formatação em tempo real
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            this.value = formatCPF(this.value);
+        });
+        
+        document.getElementById('cpf_boleto').addEventListener('input', function(e) {
+            this.value = formatCPF(this.value);
+        });
+        
+        document.getElementById('cep').addEventListener('input', function(e) {
+            this.value = formatCEP(this.value);
+        });
+        
+        document.getElementById('cep_boleto').addEventListener('input', function(e) {
+            this.value = formatCEP(this.value);
+        });
+        
+        document.getElementById('telefone_principal').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+            // Mostrar confirmação do WhatsApp quando o telefone estiver completo
+            if (this.value.length === 15) {
+                document.getElementById('whatsapp_confirm').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('telefone_principal_boleto').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+            // Mostrar confirmação do WhatsApp quando o telefone estiver completo
+            if (this.value.length === 15) {
+                document.getElementById('whatsapp_confirm_boleto').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('whatsapp_principal').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('whatsapp_principal_boleto').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('telefone_secundario').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('telefone_secundario_boleto').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('whatsapp_secundario').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('whatsapp_secundario_boleto').addEventListener('input', function(e) {
+            this.value = formatPhone(this.value);
+        });
+        
+        document.getElementById('taxa_instalacao').addEventListener('input', function(e) {
+            this.value = formatCurrency(this.value);
+        });
+        
+        document.getElementById('taxa_instalacao_boleto').addEventListener('input', function(e) {
+            this.value = formatCurrency(this.value);
+        });
+        
+        // Função para copiar número para WhatsApp
+        function copyToWhatsApp(isWhatsApp) {
+            const telefonePrincipal = document.getElementById('telefone_principal').value;
+            const whatsappPrincipal = document.getElementById('whatsapp_principal');
+            
+            if (isWhatsApp) {
+                whatsappPrincipal.value = telefonePrincipal;
+            }
+            
+            document.getElementById('whatsapp_confirm').style.display = 'none';
+        }
+        
+        function copyToWhatsAppBoleto(isWhatsApp) {
+            const telefonePrincipal = document.getElementById('telefone_principal_boleto').value;
+            const whatsappPrincipal = document.getElementById('whatsapp_principal_boleto');
+            
+            if (isWhatsApp) {
+                whatsappPrincipal.value = telefonePrincipal;
+            }
+            
+            document.getElementById('whatsapp_confirm_boleto').style.display = 'none';
+        }
+        
+        // Validação de iniciais maiúsculas
+        function capitalizeWords(text) {
+            const wordsToIgnore = ['de', 'da', 'do', 'e'];
+            return text.replace(/\w\S*/g, function(txt) {
+                if (wordsToIgnore.includes(txt.toLowerCase())) {
+                    return txt.toLowerCase();
+                }
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            });
+        }
+        
+        // Aplicar capitalização em campos de texto
+        const textFields = document.querySelectorAll('input[type="text"]:not([id*="cpf"]):not([id*="cep"]):not([id*="taxa"]):not([readonly]):not([id*="data_nascimento"])');
+        textFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    this.value = capitalizeWords(this.value);
+                }
+            });
+        });
+        
+        // Função para obter localização via GPS - CORRIGIDA
+        function getLocation(isBoleto = false) {
+            const loadingElement = isBoleto 
+                ? document.getElementById('loading_boleto') 
+                : document.getElementById('loading');
+                
+            if (loadingElement) loadingElement.style.display = 'block';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Preencher campos de coordenadas e mapa
+                        if (isBoleto) {
+                            document.getElementById('coordenadas_boleto').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            document.getElementById('localizacao_mapa_boleto').value = `https://www.google.com/maps?q=${lat},${lng}`;
+                            document.getElementById('map_link_boleto').href = `https://www.google.com/maps?q=${lat},${lng}`;
+                            document.getElementById('map_link_boleto').style.display = 'inline-flex';
+                        } else {
+                            document.getElementById('coordenadas').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            document.getElementById('localizacao_mapa').value = `https://www.google.com/maps?q=${lat},${lng}`;
+                            document.getElementById('map_link').href = `https://www.google.com/maps?q=${lat},${lng}`;
+                            document.getElementById('map_link').style.display = 'inline-flex';
+                        }
+                        
+                        // Usar API de geocodificação (Nominatim - OpenStreetMap)
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.address) {
+                                    const address = data.address;
+                                    
+                                    // Preencher os campos de endereço
+                                    if (isBoleto) {
+                                        if (address.postcode) document.getElementById('cep_boleto').value = formatCEP(address.postcode);
+                                        if (address.house_number) document.getElementById('numero_boleto').value = address.house_number;
+                                        if (address.road) document.getElementById('endereco_boleto').value = address.road;
+                                        if (address.suburb || address.neighbourhood) document.getElementById('bairro_boleto').value = address.suburb || address.neighbourhood;
+                                        if (address.city || address.town || address.village) document.getElementById('cidade_boleto').value = address.city || address.town || address.village;
+                                    } else {
+                                        if (address.postcode) document.getElementById('cep').value = formatCEP(address.postcode);
+                                        if (address.house_number) document.getElementById('numero').value = address.house_number;
+                                        if (address.road) document.getElementById('endereco').value = address.road;
+                                        if (address.suburb || address.neighbourhood) document.getElementById('bairro').value = address.suburb || address.neighbourhood;
+                                        if (address.city || address.town || address.village) document.getElementById('cidade').value = address.city || address.town || address.village;
+                                    }
+                                    
+                                    if (loadingElement) loadingElement.style.display = 'none';
+                                    alert('Endereço preenchido automaticamente com sucesso!');
+                                } else {
+                                    throw new Error('Endereço não encontrado');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro ao obter endereço:', error);
+                                if (loadingElement) loadingElement.style.display = 'none';
+                                alert('Não foi possível obter o endereço completo. Por favor, preencha manualmente os campos que faltaram.');
+                            });
+                    }, 
+                    function(error) {
+                        if (loadingElement) loadingElement.style.display = 'none';
+                        let errorMessage = 'Erro ao obter localização: ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += 'Usuário negou a solicitação de Geolocalização.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += 'As informações de localização não estão disponíveis.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += 'A solicitação de localização expirou.';
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                errorMessage += 'Ocorreu um erro desconhecido.';
+                                break;
+                        }
+                        alert(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                if (loadingElement) loadingElement.style.display = 'none';
+                alert('Geolocalização não é suportada por este navegador.');
+            }
+        }
+        
+        // Adicionar eventos aos botões de GPS - CORRIGIDO
+        document.getElementById('gps_button').addEventListener('click', function() {
+            getLocation(false);
+        });
+        
+        document.getElementById('gps_button_boleto').addEventListener('click', function() {
+            getLocation(true);
+        });
+        
+        // Validação em tempo real
+        function setupValidation(fieldId, errorId, validationFn) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+            
+            field.addEventListener('blur', function() {
+                if (!validationFn(this.value)) {
+                    error.style.display = 'block';
+                    this.classList.add('validation-error');
+                } else {
+                    error.style.display = 'none';
+                    this.classList.remove('validation-error');
+                }
+            });
+            
+            field.addEventListener('input', function() {
+                if (validationFn(this.value)) {
+                    error.style.display = 'none';
+                    this.classList.remove('validation-error');
+                }
+            });
+        }
+        
+        // Configurar validações para data de nascimento (18 anos ou mais)
+        setupValidation('data_nascimento', 'data_nascimento-error', value => {
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!dateRegex.test(value)) return false;
+            const [, day, month, year] = value.match(dateRegex);
+            const birthDate = new Date(`${year}-${month}-${day}`);
+            const currentDate = new Date();
+            const minDate = new Date();
+            minDate.setFullYear(currentDate.getFullYear() - 18);
+            return birthDate <= minDate;
+        });
+
+        setupValidation('data_nascimento_boleto', 'data_nascimento_boleto-error', value => {
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!dateRegex.test(value)) return false;
+            const [, day, month, year] = value.match(dateRegex);
+            const birthDate = new Date(`${year}-${month}-${day}`);
+            const currentDate = new Date();
+            const minDate = new Date();
+            minDate.setFullYear(currentDate.getFullYear() - 18);
+            return birthDate <= minDate;
+        });
+        
+        // Configurar outras validações
+        setupValidation('nome', 'nome-error', value => value.length >= 3);
+        setupValidation('cpf', 'cpf-error', value => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value));
+        setupValidation('rg', 'rg-error', value => value.length >= 5 && value.length <= 20);
+        setupValidation('cep', 'cep-error', value => /^\d{5}-\d{3}$/.test(value));
+        setupValidation('numero', 'numero-error', value => value.length >= 1);
+        setupValidation('endereco', 'endereco-error', value => value.length >= 5);
+        setupValidation('bairro', 'bairro-error', value => value.length >= 2);
+        setupValidation('cidade', 'cidade-error', value => value.length >= 2);
+        setupValidation('telefone_principal', 'telefone_principal-error', value => /^\(\d{2}\) \d{5}-\d{4}$/.test(value));
+        setupValidation('whatsapp_principal', 'whatsapp_principal-error', value => /^\(\d{2}\) \d{5}-\d{4}$/.test(value));
+        setupValidation('email', 'email-error', value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+        setupValidation('agencia', 'agencia-error', value => value.length >= 3);
+        setupValidation('conta', 'conta-error', value => value.length >= 3);
+        setupValidation('vencimento_debito', 'vencimento_debito-error', value => value.length > 0);
+        setupValidation('fidelidade', 'fidelidade-error', value => value.length > 0);
+        setupValidation('taxa_instalacao', 'taxa_instalacao-error', value => value.length > 0);
+        setupValidation('operadora', 'operadora-error', value => value.length >= 2);
+        setupValidation('id_caixa', 'id_caixa-error', value => value.length >= 2);
+        setupValidation('plano', 'plano-error', value => value.length > 0);
+        setupValidation('vendedor', 'vendedor-error', value => value.length >= 2);
+        setupValidation('inserir_rede_mesh', 'inserir_rede_mesh-error', value => value.length > 0); // NOVA VALIDAÇÃO
+        
+        // Configurar validações para o formulário boleto
+        setupValidation('nome_boleto', 'nome_boleto-error', value => value.length >= 3);
+        setupValidation('cpf_boleto', 'cpf_boleto-error', value => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value));
+        setupValidation('rg_boleto', 'rg_boleto-error', value => value.length >= 5 && value.length <= 20);
+        setupValidation('cep_boleto', 'cep_boleto-error', value => /^\d{5}-\d{3}$/.test(value));
+        setupValidation('numero_boleto', 'numero_boleto-error', value => value.length >= 1);
+        setupValidation('endereco_boleto', 'endereco_boleto-error', value => value.length >= 5);
+        setupValidation('bairro_boleto', 'bairro_boleto-error', value => value.length >= 2);
+        setupValidation('cidade_boleto', 'cidade_boleto-error', value => value.length >= 2);
+        setupValidation('telefone_principal_boleto', 'telefone_principal_boleto-error', value => /^\(\d{2}\) \d{5}-\d{4}$/.test(value));
+        setupValidation('whatsapp_principal_boleto', 'whatsapp_principal_boleto-error', value => /^\(\d{2}\) \d{5}-\d{4}$/.test(value));
+        setupValidation('email_boleto', 'email_boleto-error', value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+        setupValidation('vencimento_boleto', 'vencimento_boleto-error', value => value.length > 0);
+        setupValidation('fidelidade_boleto', 'fidelidade_boleto-error', value => value.length > 0);
+        setupValidation('taxa_instalacao_boleto', 'taxa_instalacao_boleto-error', value => value.length > 0);
+        setupValidation('operadora_boleto', 'operadora_boleto-error', value => value.length >= 2);
+        setupValidation('id_caixa_boleto', 'id_caixa_boleto-error', value => value.length >= 2);
+        setupValidation('plano_boleto', 'plano_boleto-error', value => value.length > 0);
+        setupValidation('vendedor_boleto', 'vendedor_boleto-error', value => value.length >= 2);
+        setupValidation('inserir_rede_mesh_boleto', 'inserir_rede_mesh_boleto-error', value => value.length > 0); // NOVA VALIDAÇÃO
+        
+        // Função para validar todo o formulário
+        function validateForm(isBoleto = false) {
+            let isValid = true;
+            const prefix = isBoleto ? '_boleto' : '';
+            
+            // Lista de campos obrigatórios (removidos operadora e id_caixa)
+            const requiredFields = [
+                'nome', 'cpf', 'rg', 'data_nascimento', 'cep', 'numero', 
+                'endereco', 'bairro', 'cidade', 'telefone_principal', 'whatsapp_principal', 'email'
+            ];
+            
+            if (!isBoleto) {
+                requiredFields.push('agencia', 'conta', 'vencimento_debito');
+            } else {
+                requiredFields.push('vencimento_boleto');
+            }
+            
+            requiredFields.push('fidelidade', 'taxa_instalacao', 'plano', 'vendedor', 'inserir_rede_mesh'); // ADICIONADO inserir_rede_mesh
+            
+            // Validar cada campo
+            requiredFields.forEach(field => {
+                const fieldId = field + prefix;
+                const fieldElement = document.getElementById(fieldId);
+                const errorElement = document.getElementById(fieldId + '-error');
+                
+                if (fieldElement) {
+                    let fieldValid = true;
+                    
+                    // Verificações específicas por tipo de campo
+                    if (field === 'cpf') {
+                        fieldValid = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(fieldElement.value);
+                    } else if (field === 'cep') {
+                        fieldValid = /^\d{5}-\d{3}$/.test(fieldElement.value);
+                    } else if (field === 'telefone_principal' || field === 'whatsapp_principal') {
+                        fieldValid = /^\(\d{2}\) \d{5}-\d{4}$/.test(fieldElement.value);
+                    } else if (field === 'email') {
+                        fieldValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldElement.value);
+                    } else if (field === 'data_nascimento') {
+                        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+                        if (!dateRegex.test(fieldElement.value)) {
+                            fieldValid = false;
+                        } else {
+                            const [, day, month, year] = fieldElement.value.match(dateRegex);
+                            const birthDate = new Date(`${year}-${month}-${day}`);
+                            const currentDate = new Date();
+                            const minDate = new Date();
+                            minDate.setFullYear(currentDate.getFullYear() - 18);
+                            fieldValid = birthDate <= minDate;
+                        }
+                    } else if (field === 'rg') {
+                        fieldValid = fieldElement.value.length >= 5 && fieldElement.value.length <= 20;
+                    } else if (['nome', 'endereco', 'bairro', 'cidade', 'vendedor'].includes(field)) {
+                        fieldValid = fieldElement.value.length >= (field === 'nome' ? 3 : 2);
+                    } else if (['agencia', 'conta'].includes(field)) {
+                        fieldValid = fieldElement.value.length >= 3;
+                    } else if (['inserir_rede_mesh'].includes(field)) { // NOVA VALIDAÇÃO ESPECÍFICA
+                        fieldValid = fieldElement.value.length > 0;
+                    } else {
+                        fieldValid = fieldElement.value.length > 0;
+                    }
+                    
+                    if (!fieldValid) {
+                        isValid = false;
+                        fieldElement.classList.add('validation-error');
+                        if (errorElement) errorElement.style.display = 'block';
+                    } else {
+                        fieldElement.classList.remove('validation-error');
+                        if (errorElement) errorElement.style.display = 'none';
+                    }
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Função para copiar dados do formulário - COM VALIDAÇÃO
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const activeForm = document.querySelector('.form-section.active').id;
+            const isBoleto = activeForm === 'boleto';
+            
+            // Validar formulário antes de copiar
+            if (!validateForm(isBoleto)) {
+                alert('Por favor, preencha todos os campos obrigatórios corretamente antes de copiar.');
+                return;
+            }
+            
+            let formData = '';
+            
+            if (activeForm === 'debito') {
+                const fields = document.querySelectorAll('#debito input, #debito select');
+                fields.forEach(field => {
+                    if (field.type !== 'file' && field.type !== 'button' && !field.classList.contains('gps-button') && field.id !== 'coordenadas' && field.id !== 'localizacao_mapa') {
+                        const label = document.querySelector(`label[for="${field.id}"]`);
+                        const labelText = label ? label.textContent.replace(' *', '') : field.name;
+                        if (field.value) {
+                            formData += `${labelText}: ${field.value}\n`;
+                        }
+                    }
+                });
+            } else {
+                const fields = document.querySelectorAll('#boleto input, #boleto select');
+                fields.forEach(field => {
+                    if (field.type !== 'file' && field.type !== 'button' && !field.classList.contains('gps-button') && field.id !== 'coordenadas_boleto' && field.id !== 'localizacao_mapa_boleto') {
+                        const label = document.querySelector(`label[for="${field.id}"]`);
+                        const labelText = label ? label.textContent.replace(' *', '') : field.name;
+                        if (field.value) {
+                            formData += `${labelText}: ${field.value}\n`;
+                        }
+                    }
+                });
+            }
+            
+            navigator.clipboard.writeText(formData)
+                .then(() => {
+                    const successMessage = document.getElementById('successMessage');
+                    successMessage.style.display = 'block';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 5000);
+                })
+                .catch(err => {
+                    console.error('Erro ao copiar: ', err);
+                    alert('Erro ao copiar dados. Tente novamente.');
+                });
+        });
+        
+        // Função para salvar como PDF - SIMPLIFICADA E FUNCIONAL
+document.getElementById('saveButton').addEventListener('click', function() {
+    const activeForm = document.querySelector('.form-section.active').id;
+    const isBoleto = activeForm === 'boleto';
+    
+    // Validar formulário antes de salvar
+    if (!validateForm(isBoleto)) {
+        alert('Por favor, preencha todos os campos obrigatórios corretamente antes de salvar.');
+        return;
+    }
+    
+    // Mostrar mensagem de carregamento
+    const saveButton = document.getElementById('saveButton');
+    const originalText = saveButton.innerHTML;
+    saveButton.innerHTML = '⏳ Gerando PDF...';
+    saveButton.disabled = true;
+    
+    try {
+        // Criar PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // Configurações da página
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        let yPosition = margin;
+        
+        // Adicionar cabeçalho com nome da empresa
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SEM FRONTEIRAS - Ultrafibra', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 10;
+        
+        // Adicionar subtítulo
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Formulário de Abertura de Chamado', pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 8;
+        
+        // Adicionar tipo
+        const tipo = isBoleto ? 'BOLETO' : 'DÉBITO EM CONTA';
+        doc.text(`Tipo: ${tipo}`, pageWidth / 2, yPosition, { align: 'center' });
+        yPosition += 15;
+        
+        // Linha divisória
+        doc.setDrawColor(76, 175, 80);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 10;
+        
+        // Adicionar data
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR');
+        const timeStr = now.toLocaleTimeString('pt-BR');
+        doc.text(`Gerado em: ${dateStr} às ${timeStr}`, margin, yPosition);
+        yPosition += 10;
+        
+        // Coletar dados do formulário ativo
+        const prefix = isBoleto ? '_boleto' : '';
+        const activeFormId = isBoleto ? 'boleto' : 'debito';
+        const fields = document.querySelectorAll(`#${activeFormId} input, #${activeFormId} select, #${activeFormId} textarea`);
+        
+        // Configurar fonte para conteúdo
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0);
+        
+        fields.forEach(field => {
+            if (field.type !== 'button' && field.type !== 'submit' && 
+                !field.classList.contains('gps-button') && 
+                !field.classList.contains('autofill-button') && 
+                field.value && field.value.trim() !== '') {
+                
+                // Verificar se precisa de nova página
+                if (yPosition > pageHeight - 20) {
+                    doc.addPage();
+                    yPosition = margin;
+                }
+                
+                const label = document.querySelector(`label[for="${field.id}"]`);
+                const labelText = label ? label.textContent.replace(' *', '').replace(':', '') : field.name;
+                
+                // Formatar o texto
+                const text = `${labelText}: ${field.value}`;
+                
+                // Quebrar texto longo
+                const lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
+                
+                lines.forEach(line => {
+                    if (yPosition > pageHeight - 20) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
+                    doc.text(line, margin, yPosition);
+                    yPosition += 6;
+                });
+                
+                yPosition += 2; // Espaço entre campos
+            }
+        });
+        
+        // Adicionar rodapé em todas as páginas
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setTextColor(150);
+            doc.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+        
+        // Salvar o PDF
+        const fileName = isBoleto ? 
+            'formulario_pf_internet_telefone_boleto.pdf' : 
+            'formulario_pf_internet_telefone_debito.pdf';
+        
+        doc.save(fileName);
+        
+        // Restaurar botão
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+        
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        alert('Erro ao gerar PDF. Por favor, tente novamente.');
+        
+        // Restaurar botão
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+    }
+});
+
+        // Função para limpar o formulário ativo
+        document.getElementById('clearButton').addEventListener('click', function() {
+            const activeForm = document.querySelector('.form-section.active').id;
+            const isBoleto = activeForm === 'boleto';
+            
+            if (confirm('Tem certeza que deseja limpar todos os campos do formulário? Todos os dados serão perdidos.')) {
+                if (isBoleto) {
+                    // Limpar formulário boleto
+                    const boletoFields = document.querySelectorAll('#boleto input, #boleto select');
+                    boletoFields.forEach(field => {
+                        if (field.type !== 'button' && field.type !== 'submit') {
+                            field.value = '';
+                            field.classList.remove('validation-error');
+                            
+                            // Ocultar mensagens de erro
+                            const errorElement = document.getElementById(field.id + '-error');
+                            if (errorElement) {
+                                errorElement.style.display = 'none';
+                            }
+                            
+                            // Ocultar confirmação do WhatsApp
+                            if (field.id === 'telefone_principal_boleto') {
+                                document.getElementById('whatsapp_confirm_boleto').style.display = 'none';
+                            }
+                        }
+                    });
+                    
+                    // Ocultar link do mapa
+                    document.getElementById('map_link_boleto').style.display = 'none';
+                } else {
+                    // Limpar formulário débito
+                    const debitoFields = document.querySelectorAll('#debito input, #debito select');
+                    debitoFields.forEach(field => {
+                        if (field.type !== 'button' && field.type !== 'submit') {
+                            field.value = '';
+                            field.classList.remove('validation-error');
+                            
+                            // Ocultar mensagens de erro
+                            const errorElement = document.getElementById(field.id + '-error');
+                            if (errorElement) {
+                                errorElement.style.display = 'none';
+                            }
+                            
+                            // Ocultar confirmação do WhatsApp
+                            if (field.id === 'telefone_principal') {
+                                document.getElementById('whatsapp_confirm').style.display = 'none';
+                            }
+                        }
+                    });
+                    
+                    // Ocultar link do mapa
+                    document.getElementById('map_link').style.display = 'none';
+                }
+                
+                // Ocultar mensagem de sucesso
+                document.getElementById('successMessage').style.display = 'none';
+                
+                alert('Formulário limpo com sucesso!');
+            }
+        });
+    </script>
+</body>
+</html>
