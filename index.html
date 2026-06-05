@@ -11,268 +11,794 @@
     <link rel="icon" type="image/png" href="android-icon-192x192.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Estilos adicionais para as telas de autenticação */
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            background: none;
+            border: none;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+        .step form {
+            margin-top: 15px;
+        }
+        .link-button {
+            background: none;
+            border: none;
+            color: #2196F3;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            text-decoration: underline;
+        }
+        .link-button:hover {
+            color: #0b5ed7;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            cursor: pointer;
+        }
+        .back-link:hover {
+            color: #333;
+        }
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .code-inputs input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
-        <!-- Tela inicial de seleção -->
-        <div class="container" id="homeScreen">
+        <!-- ============================================ -->
+        <!-- TELA 1: LOGIN -->
+        <!-- ============================================ -->
+        <div id="loginScreen" class="container" style="max-width: 450px;">
             <div class="logo-section">
                 <div class="logo">
                     <img src="https://i.imgur.com/SEr4lkm.png" alt="Logomarca">
                 </div>
             </div>
-
-            <div class="page-title">Abertura de Chamados - Novos Clientes</div>
-
-            <div class="app-controls">
-                <button class="install-btn" id="installButton" style="display: none;">
-                    📲 Instalar App
-                </button>
-                <button class="update-btn" id="updateButton" style="display: none;">
-                    🔄 Atualizar App
-                </button>
-            </div>
             
-            <!-- Passo 1: Tipo de Cliente -->
+            <div class="page-title">Acesso ao Sistema</div>
+            
             <div class="step">
-                <div class="step-title" data-number="1">Selecione o tipo de cliente:</div>
-                <div class="options-grid">
-                    <div class="option-card" data-type="pf" onclick="selectType('pf')">
-                        <div class="option-check">✓</div>
-                        <div class="option-icon">👤</div>
-                        <div class="option-title">Pessoa Física (CPF)</div>
-                        <div class="option-description">Para clientes individuais com CPF</div>
-                    </div>
-                    
-                    <div class="option-card" data-type="pj" onclick="selectType('pj')">
-                        <div class="option-check">✓</div>
-                        <div class="option-icon">🏢</div>
-                        <div class="option-title">Pessoa Jurídica (CNPJ)</div>
-                        <div class="option-description">Para empresas com CNPJ</div>
+                <div class="form-group">
+                    <label>Usuário ou E-mail:</label>
+                    <input type="text" id="login_usuario" placeholder="Digite seu usuário ou e-mail">
+                </div>
+                
+                <div class="form-group">
+                    <label>Senha:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="login_senha" placeholder="Digite sua senha">
+                        <button type="button" class="toggle-password" onclick="togglePassword('login_senha', this)">👁️</button>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Passo 2: Tipo de Serviço -->
-            <div class="step">
-                <div class="step-title" data-number="2">Selecione o serviço:</div>
-                <div class="service-options">
-                    <div class="service-option" data-service="internet" onclick="selectService('internet')">
-                        <div class="option-check">✓</div>
-                        <div class="service-icon">🌐</div>
-                        <div class="service-title">Somente Internet</div>
-                    </div>
-                    
-                    <div class="service-option" data-service="internet-telefone" onclick="selectService('internet-telefone')">
-                        <div class="option-check">✓</div>
-                        <div class="service-icon">🌐📞</div>
-                        <div class="service-title">Internet + Telefone Fixo</div>
-                    </div>
-                    
-                    <div class="service-option" data-service="telefone" onclick="selectService('telefone')">
-                        <div class="option-check">✓</div>
-                        <div class="service-icon">📞</div>
-                        <div class="service-title">Telefone Fixo</div>
-                    </div>
+                
+                <button class="start-button" id="loginButton" style="width: 100%; margin-top: 10px;">
+                    🔐 Entrar
+                </button>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="link-button" onclick="showRecuperarScreen()">🔑 Esqueci minha senha</button>
+                    <br>
+                    <button class="link-button" onclick="showCadastroScreen()">📝 Primeiro acesso - Cadastre-se</button>
                 </div>
+                
+                <div id="loginError" class="validation-message" style="display: none; margin-top: 15px;"></div>
             </div>
-            
-            <!-- Mensagem de validação -->
-            <div class="validation-message" id="validationMessage">
-                Por favor, selecione o tipo de cliente e o serviço antes de continuar.
-            </div>
-            
-            <!-- Informações -->
-            <div class="info-box">
-                <div class="info-title">ℹ️ Informações importantes</div>
-                <div class="info-text">
-                    Após selecionar as opções acima, você será direcionado para o formulário específico 
-                    para preenchimento dos dados do cliente. Certifique-se de ter todos os documentos 
-                    necessários antes de iniciar.
-                </div>
-            </div>
-            
-            <!-- Botão para iniciar -->
-            <button class="start-button" id="startButton" onclick="startSelection()" disabled>
-                <span>📋</span> Iniciar Formulário →
-            </button>
         </div>
+        
+        <!-- ============================================ -->
+        <!-- TELA 2: PRIMEIRO ACESSO (CADASTRO) -->
+        <!-- ============================================ -->
+        <div id="cadastroScreen" class="container" style="max-width: 500px; display: none;">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="https://i.imgur.com/SEr4lkm.png" alt="Logomarca">
+                </div>
+            </div>
+            
+            <div class="page-title">Primeiro Acesso</div>
+            
+            <div class="step">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Completo:</label>
+                        <input type="text" id="cadastro_nome" placeholder="Digite seu nome completo">
+                    </div>
+                    <div class="form-group">
+                        <label>CPF:</label>
+                        <input type="text" id="cadastro_cpf" placeholder="000.000.000-00" oninput="formatarCPF(this)">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Setor:</label>
+                        <input type="text" id="cadastro_setor" placeholder="Ex: Comercial, Financeiro">
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo:</label>
+                        <input type="text" id="cadastro_cargo" placeholder="Ex: Vendedor, Supervisor">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>E-mail:</label>
+                        <input type="email" id="cadastro_email" placeholder="seu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Usuário:</label>
+                        <input type="text" id="cadastro_usuario" placeholder="Nome de usuário para login">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone:</label>
+                        <input type="text" id="cadastro_telefone" placeholder="(00) 00000-0000" oninput="formatarTelefone(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="cadastro_senha" placeholder="Crie uma senha">
+                            <button type="button" class="toggle-password" onclick="togglePassword('cadastro_senha', this)">👁️</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirmar Senha:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cadastro_confirmar_senha" placeholder="Confirme sua senha">
+                        <button type="button" class="toggle-password" onclick="togglePassword('cadastro_confirmar_senha', this)">👁️</button>
+                    </div>
+                </div>
+                
+                <button class="start-button" id="cadastrarButton" style="width: 100%; margin-top: 10px;">
+                    📝 Cadastrar
+                </button>
+                
+                <div class="back-link" onclick="showLoginScreen()">← Voltar para o Login</div>
+                
+                <div id="cadastroError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+                <div id="cadastroSuccess" class="success-message" style="display: none; margin-top: 15px;"></div>
+            </div>
+        </div>
+        
+        <!-- ============================================ -->
+        <!-- TELA 3: RECUPERAR SENHA - ETAPA 1 (E-MAIL) -->
+        <!-- ============================================ -->
+        <div id="recuperarScreen" class="container" style="max-width: 450px; display: none;">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="https://i.imgur.com/SEr4lkm.png" alt="Logomarca">
+                </div>
+            </div>
+            
+            <div class="page-title">Recuperar Senha</div>
+            
+            <div class="step" id="recuperarEtapa1">
+                <div class="form-group">
+                    <label>Digite seu e-mail cadastrado:</label>
+                    <input type="email" id="recuperar_email" placeholder="seu@email.com">
+                </div>
+                
+                <button class="start-button" id="enviarCodigoButton" style="width: 100%;">
+                    📧 Enviar Código
+                </button>
+                
+                <div class="back-link" onclick="showLoginScreen()">← Voltar para o Login</div>
+                
+                <div id="recuperarError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+            </div>
+            
+            <!-- ETAPA 2: CÓDIGO -->
+            <div class="step" id="recuperarEtapa2" style="display: none;">
+                <div class="form-group">
+                    <label>Digite o código de 6 dígitos enviado:</label>
+                    <div class="code-inputs">
+                        <input type="text" maxlength="1" class="code-digit" data-index="0">
+                        <input type="text" maxlength="1" class="code-digit" data-index="1">
+                        <input type="text" maxlength="1" class="code-digit" data-index="2">
+                        <input type="text" maxlength="1" class="code-digit" data-index="3">
+                        <input type="text" maxlength="1" class="code-digit" data-index="4">
+                        <input type="text" maxlength="1" class="code-digit" data-index="5">
+                    </div>
+                </div>
+                
+                <button class="start-button" id="verificarCodigoButton" style="width: 100%;">
+                    ✅ Verificar Código
+                </button>
+                
+                <div class="back-link" onclick="showRecuperarScreen()">← Voltar</div>
+                
+                <div id="codigoError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+            </div>
+            
+            <!-- ETAPA 3: NOVA SENHA -->
+            <div class="step" id="recuperarEtapa3" style="display: none;">
+                <div class="form-group">
+                    <label>Nova Senha:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="nova_senha" placeholder="Digite a nova senha">
+                        <button type="button" class="toggle-password" onclick="togglePassword('nova_senha', this)">👁️</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirmar Nova Senha:</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmar_nova_senha" placeholder="Confirme a nova senha">
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirmar_nova_senha', this)">👁️</button>
+                    </div>
+                </div>
+                
+                <button class="start-button" id="alterarSenhaButton" style="width: 100%;">
+                    🔐 Alterar Senha
+                </button>
+                
+                <div class="back-link" onclick="showLoginScreen()">← Voltar para o Login</div>
+                
+                <div id="novaSenhaError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+                <div id="novaSenhaSuccess" class="success-message" style="display: none; margin-top: 15px;"></div>
+            </div>
+        </div>
+        
+        <!-- ============================================ -->
+        <!-- TELA 4: HOME (SELECÃO DE FORMULÁRIO) -->
+        <!-- ============================================ -->
+        <div id="homeScreen" style="display: none;"></div>
     </div>
 
+    <script src="supabase-config.js"></script>
     <script src="utils.js"></script>
     <script src="templates.js"></script>
     <script src="router.js"></script>
     <script>
         // ============================================
-        // SCRIPT PRINCIPAL DO INDEX (TELA INICIAL)
+        // SCRIPT PRINCIPAL - GERENCIAMENTO DE TELAS
         // ============================================
         
-        // Variáveis para armazenar as seleções
-        let selectedType = null;
-        let selectedService = null;
+        let recuperarEmail = '';
         
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
-            });
-        }
-
-        // PWA Install Prompt
-        let deferredPrompt;
-        const installButton = document.getElementById('installButton');
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'block';
-            
-            installButton.addEventListener('click', () => {
-                installButton.style.display = 'none';
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            });
-        });
-
-        // Check for updates
-        const updateButton = document.getElementById('updateButton');
-        let waitingWorker = null;
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                window.location.reload();
-            });
-
-            navigator.serviceWorker.register('service-worker.js').then(registration => {
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            updateButton.style.display = 'block';
-                            waitingWorker = newWorker;
-                        }
-                    });
-                });
-            });
-
-            updateButton.addEventListener('click', () => {
-                if (waitingWorker) {
-                    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-                }
-                updateButton.style.display = 'none';
-            });
-        }
-        
-        // Selecionar tipo de cliente
-        function selectType(type) {
-            // Remover seleção anterior
-            document.querySelectorAll('.option-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // Adicionar seleção atual
-            document.querySelector(`.option-card[data-type="${type}"]`).classList.add('selected');
-            selectedType = type;
-            
-            // Atualizar botão
-            updateStartButton();
-        }
-        
-        // Selecionar serviço
-        function selectService(service) {
-            // Remover seleção anterior
-            document.querySelectorAll('.service-option').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            // Adicionar seleção atual
-            document.querySelector(`.service-option[data-service="${service}"]`).classList.add('selected');
-            selectedService = service;
-            
-            // Atualizar botão
-            updateStartButton();
-        }
-        
-        // Atualizar estado do botão de iniciar
-        function updateStartButton() {
-            const button = document.getElementById('startButton');
-            const validationMessage = document.getElementById('validationMessage');
-            
-            if (selectedType && selectedService) {
-                button.removeAttribute('disabled');
-                button.style.opacity = '1';
-                button.style.cursor = 'pointer';
-                validationMessage.style.display = 'none';
+        // Alternar visibilidade da senha
+        window.togglePassword = function(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
             } else {
-                button.setAttribute('disabled', 'disabled');
-                button.style.opacity = '0.6';
-                button.style.cursor = 'not-allowed';
+                input.type = 'password';
+                button.textContent = '👁️';
             }
+        };
+        
+        // Formatar CPF
+        window.formatarCPF = function(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                input.value = value;
+            }
+        };
+        
+        // Formatar Telefone
+        window.formatarTelefone = function(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                input.value = value;
+            }
+        };
+        
+        // Navegação entre telas
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'none';
+            
+            // Limpar campos
+            document.getElementById('login_usuario').value = '';
+            document.getElementById('login_senha').value = '';
+            document.getElementById('loginError').style.display = 'none';
         }
         
-        // Iniciar o formulário baseado nas seleções
-        function startSelection() {
-            if (!selectedType || !selectedService) {
-                document.getElementById('validationMessage').style.display = 'block';
+        function showCadastroScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'block';
+            document.getElementById('recuperarScreen').style.display = 'none';
+            
+            // Limpar campos e mensagens
+            document.getElementById('cadastro_nome').value = '';
+            document.getElementById('cadastro_cpf').value = '';
+            document.getElementById('cadastro_setor').value = '';
+            document.getElementById('cadastro_cargo').value = '';
+            document.getElementById('cadastro_email').value = '';
+            document.getElementById('cadastro_usuario').value = '';
+            document.getElementById('cadastro_telefone').value = '';
+            document.getElementById('cadastro_senha').value = '';
+            document.getElementById('cadastro_confirmar_senha').value = '';
+            document.getElementById('cadastroError').style.display = 'none';
+            document.getElementById('cadastroSuccess').style.display = 'none';
+        }
+        
+        function showRecuperarScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'block';
+            
+            // Resetar para etapa 1
+            document.getElementById('recuperarEtapa1').style.display = 'block';
+            document.getElementById('recuperarEtapa2').style.display = 'none';
+            document.getElementById('recuperarEtapa3').style.display = 'none';
+            document.getElementById('recuperar_email').value = '';
+            document.getElementById('recuperarError').style.display = 'none';
+            document.getElementById('codigoError').style.display = 'none';
+            document.getElementById('novaSenhaError').style.display = 'none';
+            document.getElementById('novaSenhaSuccess').style.display = 'none';
+            
+            // Limpar campos de código
+            document.querySelectorAll('.code-digit').forEach(input => input.value = '');
+        }
+        
+        function showHomeScreen(user) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'none';
+            
+            const homeContainer = document.getElementById('homeScreen');
+            homeContainer.style.display = 'block';
+            homeContainer.innerHTML = getHomeScreenHTML(user);
+            
+            // Inicializar seleção de formulário
+            initializeHomeSelection();
+        }
+        
+        // ============================================
+        // FUNÇÕES DE LOGIN E CADASTRO
+        // ============================================
+        
+        // Login
+        async function doLogin() {
+            const usuario = document.getElementById('login_usuario').value.trim();
+            const senha = document.getElementById('login_senha').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!usuario || !senha) {
+                errorDiv.textContent = 'Preencha usuário/e-mail e senha';
+                errorDiv.style.display = 'block';
                 return;
             }
             
-            // Chamar a função do router para carregar o formulário
-            const success = startForm(selectedType, selectedService);
+            const result = await login(usuario, senha);
             
-            if (success) {
-                // Esconder a tela inicial (opcional, pois o router substitui o conteúdo)
-                // O router já substitui o conteúdo do #app, então não precisa fazer nada aqui
-                console.log('Formulário carregado com sucesso:', selectedType, selectedService);
+            if (result.success) {
+                errorDiv.style.display = 'none';
+                showHomeScreen(result.user);
             } else {
-                alert('Opção não disponível no momento. Por favor, entre em contato com o suporte.');
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
             }
         }
         
-        // Adicionar teclas de atalho
-        document.addEventListener('keydown', function(e) {
-            // 1 = PF, 2 = PJ
-            if (e.key === '1') {
-                selectType('pf');
-            } else if (e.key === '2') {
-                selectType('pj');
+        // Cadastro
+        async function doCadastro() {
+            const nome = document.getElementById('cadastro_nome').value.trim();
+            const cpf = document.getElementById('cadastro_cpf').value.trim();
+            const setor = document.getElementById('cadastro_setor').value.trim();
+            const cargo = document.getElementById('cadastro_cargo').value.trim();
+            const email = document.getElementById('cadastro_email').value.trim();
+            const usuario = document.getElementById('cadastro_usuario').value.trim();
+            const telefone = document.getElementById('cadastro_telefone').value.trim();
+            const senha = document.getElementById('cadastro_senha').value;
+            const confirmarSenha = document.getElementById('cadastro_confirmar_senha').value;
+            const errorDiv = document.getElementById('cadastroError');
+            const successDiv = document.getElementById('cadastroSuccess');
+            
+            // Validações
+            if (!nome || !cpf || !email || !usuario || !senha) {
+                errorDiv.textContent = 'Preencha todos os campos obrigatórios';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
             }
             
-            // I = Internet, T = Telefone, B = Internet+Telefone (B de ambos)
-            if (e.key === 'i' || e.key === 'I') {
-                selectService('internet');
-            } else if (e.key === 't' || e.key === 'T') {
-                selectService('telefone');
-            } else if (e.key === 'b' || e.key === 'B') {
-                selectService('internet-telefone');
+            if (senha !== confirmarSenha) {
+                errorDiv.textContent = 'As senhas não coincidem';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
             }
             
-            // Enter para iniciar
-            if (e.key === 'Enter' && selectedType && selectedService) {
-                startSelection();
+            if (senha.length < 6) {
+                errorDiv.textContent = 'A senha deve ter pelo menos 6 caracteres';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
             }
+            
+            const result = await cadastrarUsuario(nome, cpf, setor, cargo, email, usuario, telefone, senha);
+            
+            if (result.success) {
+                errorDiv.style.display = 'none';
+                successDiv.textContent = '✅ Cadastro realizado com sucesso! Agora você pode fazer login.';
+                successDiv.style.display = 'block';
+                
+                // Limpar formulário
+                document.getElementById('cadastro_nome').value = '';
+                document.getElementById('cadastro_cpf').value = '';
+                document.getElementById('cadastro_setor').value = '';
+                document.getElementById('cadastro_cargo').value = '';
+                document.getElementById('cadastro_email').value = '';
+                document.getElementById('cadastro_usuario').value = '';
+                document.getElementById('cadastro_telefone').value = '';
+                document.getElementById('cadastro_senha').value = '';
+                document.getElementById('cadastro_confirmar_senha').value = '';
+                
+                // Voltar para login após 2 segundos
+                setTimeout(() => {
+                    showLoginScreen();
+                }, 2000);
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+        }
+        
+        // Enviar código de recuperação
+        async function enviarCodigo() {
+            const email = document.getElementById('recuperar_email').value.trim();
+            const errorDiv = document.getElementById('recuperarError');
+            
+            if (!email) {
+                errorDiv.textContent = 'Digite seu e-mail';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            const result = await solicitarRecuperacao(email);
+            
+            if (result.success) {
+                recuperarEmail = email;
+                errorDiv.style.display = 'none';
+                document.getElementById('recuperarEtapa1').style.display = 'none';
+                document.getElementById('recuperarEtapa2').style.display = 'block';
+                
+                // Configurar navegação entre campos de código
+                setupCodeInputs();
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Configurar inputs de código
+        function setupCodeInputs() {
+            const inputs = document.querySelectorAll('.code-digit');
+            inputs.forEach((input, index) => {
+                input.value = '';
+                input.onkeyup = (e) => {
+                    if (e.key >= '0' && e.key <= '9') {
+                        if (index < 5) inputs[index + 1].focus();
+                    } else if (e.key === 'Backspace') {
+                        if (index > 0) inputs[index - 1].focus();
+                    }
+                };
+            });
+        }
+        
+        // Verificar código
+        async function verificarCodigo() {
+            const inputs = document.querySelectorAll('.code-digit');
+            const codigo = Array.from(inputs).map(i => i.value).join('');
+            const errorDiv = document.getElementById('codigoError');
+            
+            if (codigo.length !== 6) {
+                errorDiv.textContent = 'Digite o código completo de 6 dígitos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            const result = await verificarCodigoRecuperacao(recuperarEmail, codigo);
+            
+            if (result.success) {
+                errorDiv.style.display = 'none';
+                document.getElementById('recuperarEtapa2').style.display = 'none';
+                document.getElementById('recuperarEtapa3').style.display = 'block';
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Alterar senha
+        async function alterarSenha() {
+            const novaSenha = document.getElementById('nova_senha').value;
+            const confirmarSenha = document.getElementById('confirmar_nova_senha').value;
+            const inputs = document.querySelectorAll('.code-digit');
+            const codigo = Array.from(inputs).map(i => i.value).join('');
+            const errorDiv = document.getElementById('novaSenhaError');
+            const successDiv = document.getElementById('novaSenhaSuccess');
+            
+            if (!novaSenha || !confirmarSenha) {
+                errorDiv.textContent = 'Preencha a nova senha';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            if (novaSenha !== confirmarSenha) {
+                errorDiv.textContent = 'As senhas não coincidem';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            if (novaSenha.length < 6) {
+                errorDiv.textContent = 'A senha deve ter pelo menos 6 caracteres';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+                return;
+            }
+            
+            const result = await redefinirSenha(recuperarEmail, codigo, novaSenha);
+            
+            if (result.success) {
+                errorDiv.style.display = 'none';
+                successDiv.textContent = '✅ Senha alterada com sucesso! Redirecionando para o login...';
+                successDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    showLoginScreen();
+                }, 2000);
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+        }
+        
+        // ============================================
+        // HOME SCREEN (SELEÇÃO DE FORMULÁRIO)
+        // ============================================
+        
+        function getHomeScreenHTML(user) {
+            return `
+                <div class="container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <span style="font-size: 14px; color: #666;">Bem-vindo, <strong>${user.nome_completo || user.nome}</strong></span>
+                            <br>
+                            <span style="font-size: 12px; color: #999;">${user.role === 'admin' ? '👑 Administrador' : '👤 Vendedor'}</span>
+                        </div>
+                        <button onclick="doLogout()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                            🚪 Sair
+                        </button>
+                    </div>
+                    
+                    <div class="logo-section">
+                        <div class="logo">
+                            <img src="https://i.imgur.com/SEr4lkm.png" alt="Logomarca">
+                        </div>
+                    </div>
+                    
+                    <div class="page-title">Abertura de Chamados - Novos Clientes</div>
+                    
+                    <div class="step">
+                        <div class="step-title" data-number="1">Selecione o tipo de cliente:</div>
+                        <div class="options-grid">
+                            <div class="option-card" data-type="pf">
+                                <div class="option-check">✓</div>
+                                <div class="option-icon">👤</div>
+                                <div class="option-title">Pessoa Física (CPF)</div>
+                                <div class="option-description">Para clientes individuais com CPF</div>
+                            </div>
+                            <div class="option-card" data-type="pj">
+                                <div class="option-check">✓</div>
+                                <div class="option-icon">🏢</div>
+                                <div class="option-title">Pessoa Jurídica (CNPJ)</div>
+                                <div class="option-description">Para empresas com CNPJ</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title" data-number="2">Selecione o serviço:</div>
+                        <div class="service-options">
+                            <div class="service-option" data-service="internet">
+                                <div class="option-check">✓</div>
+                                <div class="service-icon">🌐</div>
+                                <div class="service-title">Somente Internet</div>
+                            </div>
+                            <div class="service-option" data-service="internet-telefone">
+                                <div class="option-check">✓</div>
+                                <div class="service-icon">🌐📞</div>
+                                <div class="service-title">Internet + Telefone Fixo</div>
+                            </div>
+                            <div class="service-option" data-service="telefone">
+                                <div class="option-check">✓</div>
+                                <div class="service-icon">📞</div>
+                                <div class="service-title">Telefone Fixo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="validation-message" id="validationMessage">
+                        Por favor, selecione o tipo de cliente e o serviço antes de continuar.
+                    </div>
+                    
+                    <div class="info-box">
+                        <div class="info-title">ℹ️ Informações importantes</div>
+                        <div class="info-text">
+                            Após selecionar as opções acima, você será direcionado para o formulário específico 
+                            para preenchimento dos dados do cliente.
+                        </div>
+                    </div>
+                    
+                    <button class="start-button" id="startButton" disabled>
+                        <span>📋</span> Iniciar Formulário →
+                    </button>
+                    
+                    <div class="info-box" style="margin-top: 20px; background-color: #e3f2fd;">
+                        <div class="info-title">📊 Seus chamados</div>
+                        <div class="info-text">
+                            <button onclick="verMeusChamados()" style="background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%;">
+                                Ver lista de chamados salvos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function initializeHomeSelection() {
+            let selectedType = null;
+            let selectedService = null;
+            
+            const optionCards = document.querySelectorAll('.option-card');
+            const serviceOptions = document.querySelectorAll('.service-option');
+            const startButton = document.getElementById('startButton');
+            const validationMessage = document.getElementById('validationMessage');
+            
+            function updateStartButton() {
+                if (selectedType && selectedService) {
+                    startButton.removeAttribute('disabled');
+                    startButton.style.opacity = '1';
+                    startButton.style.cursor = 'pointer';
+                    if (validationMessage) validationMessage.style.display = 'none';
+                } else {
+                    startButton.setAttribute('disabled', 'disabled');
+                    startButton.style.opacity = '0.6';
+                    startButton.style.cursor = 'not-allowed';
+                }
+            }
+            
+            optionCards.forEach(card => {
+                card.onclick = () => {
+                    optionCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedType = card.getAttribute('data-type');
+                    updateStartButton();
+                };
+            });
+            
+            serviceOptions.forEach(option => {
+                option.onclick = () => {
+                    serviceOptions.forEach(s => s.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedService = option.getAttribute('data-service');
+                    updateStartButton();
+                };
+            });
+            
+            startButton.onclick = () => {
+                if (selectedType && selectedService) {
+                    startForm(selectedType, selectedService);
+                } else {
+                    if (validationMessage) validationMessage.style.display = 'block';
+                }
+            };
+        }
+        
+        async function verMeusChamados() {
+            const user = getCurrentUser();
+            if (!user) {
+                alert('Você precisa estar logado!');
+                return;
+            }
+            
+            const result = await listarChamados(user.id);
+            
+            if (result.success && result.chamados.length > 0) {
+                let mensagem = '📋 SEUS CHAMADOS:\n\n';
+                result.chamados.forEach((chamado, index) => {
+                    mensagem += `${index + 1}. ${chamado.tipo_cliente.toUpperCase()} - ${chamado.tipo_servico} - ${chamado.tipo_pagamento}\n`;
+                    mensagem += `   Data: ${new Date(chamado.created_at).toLocaleDateString('pt-BR')}\n`;
+                    mensagem += `   ID: ${chamado.id}\n\n`;
+                });
+                alert(mensagem);
+            } else {
+                alert('Você ainda não tem nenhum chamado salvo.');
+            }
+        }
+        
+        async function doLogout() {
+            await logout();
+            showLoginScreen();
+        }
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        
+        document.getElementById('loginButton').addEventListener('click', doLogin);
+        document.getElementById('cadastrarButton').addEventListener('click', doCadastro);
+        document.getElementById('enviarCodigoButton').addEventListener('click', enviarCodigo);
+        document.getElementById('verificarCodigoButton').addEventListener('click', verificarCodigo);
+        document.getElementById('alterarSenhaButton').addEventListener('click', alterarSenha);
+        
+        // Enter key no login
+        document.getElementById('login_senha').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+        document.getElementById('login_usuario').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doLogin();
         });
         
-        // Inicializar botão desabilitado
-        updateStartButton();
+        // Verificar se já está logado
+        if (isLoggedIn()) {
+            const user = getCurrentUser();
+            if (user) {
+                showHomeScreen(user);
+            } else {
+                showLoginScreen();
+            }
+        } else {
+            showLoginScreen();
+        }
         
         // Tornar funções globais
-        window.selectType = selectType;
-        window.selectService = selectService;
-        window.startSelection = startSelection;
+        window.doLogout = doLogout;
+        window.verMeusChamados = verMeusChamados;
+        window.startForm = function(type, service) {
+            const formKey = `${type}-${service}`;
+            if (window.loadForm) {
+                window.loadForm(type, service);
+            } else {
+                alert('Erro ao carregar formulário');
+            }
+        };
     </script>
 </body>
 </html>
