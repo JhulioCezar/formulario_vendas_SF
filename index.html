@@ -13,7 +13,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Estilos adicionais para as telas de autenticação */
+        * {
+            box-sizing: border-box;
+        }
         .toggle-password {
             position: absolute;
             right: 15px;
@@ -23,6 +25,7 @@
             font-size: 18px;
             background: none;
             border: none;
+            z-index: 10;
         }
         .password-wrapper {
             position: relative;
@@ -42,20 +45,22 @@
         .link-button:hover {
             color: #0b5ed7;
         }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #666;
-            cursor: pointer;
-            background: none;
+        .btn-voltar {
+            background: #6c757d;
+            color: white;
             border: none;
-            width: 100%;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 14px;
+            margin-top: 15px;
+            width: 100%;
+            font-weight: 500;
+            transition: all 0.3s;
         }
-        .back-link:hover {
-            color: #333;
-            text-decoration: underline;
+        .btn-voltar:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
         }
         .code-inputs {
             display: flex;
@@ -69,28 +74,32 @@
             text-align: center;
             font-size: 24px;
             font-weight: bold;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
-        .btn-voltar {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
+        .error-message-custom {
+            color: #f44336;
             font-size: 14px;
-            margin-top: 15px;
-            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 6px;
+            display: none;
         }
-        .btn-voltar:hover {
-            background: #5a6268;
+        .success-message-custom {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- ============================================ -->
         <!-- TELA 1: LOGIN -->
-        <!-- ============================================ -->
         <div id="loginScreen" class="container" style="max-width: 450px;">
             <div class="logo-section">
                 <div class="logo">
@@ -124,13 +133,11 @@
                     <button class="link-button" onclick="showCadastroScreen()">📝 Primeiro acesso - Cadastre-se</button>
                 </div>
                 
-                <div id="loginError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+                <div id="loginError" class="error-message-custom"></div>
             </div>
         </div>
         
-        <!-- ============================================ -->
-        <!-- TELA 2: PRIMEIRO ACESSO (CADASTRO) -->
-        <!-- ============================================ -->
+        <!-- TELA 2: CADASTRO -->
         <div id="cadastroScreen" class="container" style="max-width: 500px; display: none;">
             <div class="logo-section">
                 <div class="logo">
@@ -182,7 +189,7 @@
                     <div class="form-group">
                         <label>Senha:</label>
                         <div class="password-wrapper">
-                            <input type="password" id="cadastro_senha" placeholder="Crie uma senha">
+                            <input type="password" id="cadastro_senha" placeholder="Crie uma senha (mínimo 6 caracteres)">
                             <button type="button" class="toggle-password" onclick="togglePassword('cadastro_senha', this)">👁️</button>
                         </div>
                     </div>
@@ -200,16 +207,14 @@
                     📝 Cadastrar
                 </button>
                 
-                <button class="btn-voltar" onclick="showLoginScreen()">← Voltar para o Login</button>
+                <button class="btn-voltar" id="btnVoltarCadastro">← Voltar para o Login</button>
                 
-                <div id="cadastroError" class="validation-message" style="display: none; margin-top: 15px;"></div>
-                <div id="cadastroSuccess" class="success-message" style="display: none; margin-top: 15px;"></div>
+                <div id="cadastroError" class="error-message-custom"></div>
+                <div id="cadastroSuccess" class="success-message-custom"></div>
             </div>
         </div>
         
-        <!-- ============================================ -->
-        <!-- TELA 3: RECUPERAR SENHA - ETAPA 1 (E-MAIL) -->
-        <!-- ============================================ -->
+        <!-- TELA 3: RECUPERAR SENHA -->
         <div id="recuperarScreen" class="container" style="max-width: 450px; display: none;">
             <div class="logo-section">
                 <div class="logo">
@@ -229,15 +234,14 @@
                     📧 Enviar Código
                 </button>
                 
-                <button class="btn-voltar" onclick="showLoginScreen()">← Voltar para o Login</button>
+                <button class="btn-voltar" id="btnVoltarRecuperar1">← Voltar para o Login</button>
                 
-                <div id="recuperarError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+                <div id="recuperarError" class="error-message-custom"></div>
             </div>
             
-            <!-- ETAPA 2: CÓDIGO -->
             <div class="step" id="recuperarEtapa2" style="display: none;">
                 <div class="form-group">
-                    <label>Digite o código de 6 dígitos enviado:</label>
+                    <label>Digite o código de 6 dígitos:</label>
                     <div class="code-inputs">
                         <input type="text" maxlength="1" class="code-digit" data-index="0">
                         <input type="text" maxlength="1" class="code-digit" data-index="1">
@@ -252,12 +256,11 @@
                     ✅ Verificar Código
                 </button>
                 
-                <button class="btn-voltar" onclick="showRecuperarScreen()">← Voltar</button>
+                <button class="btn-voltar" id="btnVoltarRecuperar2">← Voltar</button>
                 
-                <div id="codigoError" class="validation-message" style="display: none; margin-top: 15px;"></div>
+                <div id="codigoError" class="error-message-custom"></div>
             </div>
             
-            <!-- ETAPA 3: NOVA SENHA -->
             <div class="step" id="recuperarEtapa3" style="display: none;">
                 <div class="form-group">
                     <label>Nova Senha:</label>
@@ -279,16 +282,14 @@
                     🔐 Alterar Senha
                 </button>
                 
-                <button class="btn-voltar" onclick="showLoginScreen()">← Voltar para o Login</button>
+                <button class="btn-voltar" id="btnVoltarRecuperar3">← Voltar para o Login</button>
                 
-                <div id="novaSenhaError" class="validation-message" style="display: none; margin-top: 15px;"></div>
-                <div id="novaSenhaSuccess" class="success-message" style="display: none; margin-top: 15px;"></div>
+                <div id="novaSenhaError" class="error-message-custom"></div>
+                <div id="novaSenhaSuccess" class="success-message-custom"></div>
             </div>
         </div>
         
-        <!-- ============================================ -->
-        <!-- TELA 4: HOME (SELECÃO DE FORMULÁRIO) -->
-        <!-- ============================================ -->
+        <!-- TELA 4: HOME -->
         <div id="homeScreen" style="display: none;"></div>
     </div>
 
@@ -298,13 +299,13 @@
     <script src="router.js"></script>
     <script>
         // ============================================
-        // SCRIPT PRINCIPAL - GERENCIAMENTO DE TELAS
+        // SCRIPT PRINCIPAL
         // ============================================
         
         let recuperarEmail = '';
         
         // Alternar visibilidade da senha
-        window.togglePassword = function(inputId, button) {
+        function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
                 input.type = 'text';
@@ -313,10 +314,10 @@
                 input.type = 'password';
                 button.textContent = '👁️';
             }
-        };
+        }
         
         // Formatar CPF
-        window.formatarCPF = function(input) {
+        function formatarCPF(input) {
             let value = input.value.replace(/\D/g, '');
             if (value.length <= 11) {
                 value = value.replace(/(\d{3})(\d)/, '$1.$2');
@@ -324,52 +325,42 @@
                 value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
                 input.value = value;
             }
-        };
+        }
         
         // Formatar Telefone
-        window.formatarTelefone = function(input) {
+        function formatarTelefone(input) {
             let value = input.value.replace(/\D/g, '');
             if (value.length <= 11) {
                 value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
                 value = value.replace(/(\d{5})(\d)/, '$1-$2');
                 input.value = value;
             }
-        };
+        }
         
         // ============================================
         // FUNÇÕES DE NAVEGAÇÃO (CORRIGIDAS)
         // ============================================
         
-        window.showLoginScreen = function() {
-            const loginScreen = document.getElementById('loginScreen');
-            const cadastroScreen = document.getElementById('cadastroScreen');
-            const recuperarScreen = document.getElementById('recuperarScreen');
-            const homeScreen = document.getElementById('homeScreen');
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'none';
             
-            if (loginScreen) loginScreen.style.display = 'block';
-            if (cadastroScreen) cadastroScreen.style.display = 'none';
-            if (recuperarScreen) recuperarScreen.style.display = 'none';
-            if (homeScreen) homeScreen.style.display = 'none';
-            
-            // Limpar campos de login
+            // Limpar campos
             const loginUsuario = document.getElementById('login_usuario');
             const loginSenha = document.getElementById('login_senha');
             const loginError = document.getElementById('loginError');
             if (loginUsuario) loginUsuario.value = '';
             if (loginSenha) loginSenha.value = '';
             if (loginError) loginError.style.display = 'none';
-        };
+        }
         
-        window.showCadastroScreen = function() {
-            const loginScreen = document.getElementById('loginScreen');
-            const cadastroScreen = document.getElementById('cadastroScreen');
-            const recuperarScreen = document.getElementById('recuperarScreen');
-            const homeScreen = document.getElementById('homeScreen');
-            
-            if (loginScreen) loginScreen.style.display = 'none';
-            if (cadastroScreen) cadastroScreen.style.display = 'block';
-            if (recuperarScreen) recuperarScreen.style.display = 'none';
-            if (homeScreen) homeScreen.style.display = 'none';
+        function showCadastroScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'block';
+            document.getElementById('recuperarScreen').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'none';
             
             // Limpar campos de cadastro
             const campos = ['cadastro_nome', 'cadastro_cpf', 'cadastro_setor', 'cadastro_cargo', 
@@ -384,18 +375,13 @@
             const successDiv = document.getElementById('cadastroSuccess');
             if (errorDiv) errorDiv.style.display = 'none';
             if (successDiv) successDiv.style.display = 'none';
-        };
+        }
         
-        window.showRecuperarScreen = function() {
-            const loginScreen = document.getElementById('loginScreen');
-            const cadastroScreen = document.getElementById('cadastroScreen');
-            const recuperarScreen = document.getElementById('recuperarScreen');
-            const homeScreen = document.getElementById('homeScreen');
-            
-            if (loginScreen) loginScreen.style.display = 'none';
-            if (cadastroScreen) cadastroScreen.style.display = 'none';
-            if (recuperarScreen) recuperarScreen.style.display = 'block';
-            if (homeScreen) homeScreen.style.display = 'none';
+        function showRecuperarScreen() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'block';
+            document.getElementById('homeScreen').style.display = 'none';
             
             // Resetar para etapa 1
             const etapa1 = document.getElementById('recuperarEtapa1');
@@ -418,13 +404,12 @@
             // Limpar campos de código
             const codeInputs = document.querySelectorAll('.code-digit');
             codeInputs.forEach(input => input.value = '');
-        };
+        }
         
         // ============================================
         // FUNÇÕES DE LOGIN E CADASTRO
         // ============================================
         
-        // Login
         async function doLogin() {
             const usuario = document.getElementById('login_usuario').value.trim();
             const senha = document.getElementById('login_senha').value;
@@ -447,7 +432,6 @@
             }
         }
         
-        // Cadastro
         async function doCadastro() {
             const nome = document.getElementById('cadastro_nome').value.trim();
             const cpf = document.getElementById('cadastro_cpf').value.trim();
@@ -461,7 +445,6 @@
             const errorDiv = document.getElementById('cadastroError');
             const successDiv = document.getElementById('cadastroSuccess');
             
-            // Validações
             if (!nome || !cpf || !email || !usuario || !senha) {
                 errorDiv.textContent = 'Preencha todos os campos obrigatórios';
                 errorDiv.style.display = 'block';
@@ -487,21 +470,9 @@
             
             if (result.success) {
                 errorDiv.style.display = 'none';
-                successDiv.textContent = '✅ Cadastro realizado com sucesso! Redirecionando para o login...';
+                successDiv.textContent = '✅ Cadastro realizado com sucesso! Redirecionando...';
                 successDiv.style.display = 'block';
                 
-                // Limpar formulário
-                document.getElementById('cadastro_nome').value = '';
-                document.getElementById('cadastro_cpf').value = '';
-                document.getElementById('cadastro_setor').value = '';
-                document.getElementById('cadastro_cargo').value = '';
-                document.getElementById('cadastro_email').value = '';
-                document.getElementById('cadastro_usuario').value = '';
-                document.getElementById('cadastro_telefone').value = '';
-                document.getElementById('cadastro_senha').value = '';
-                document.getElementById('cadastro_confirmar_senha').value = '';
-                
-                // Voltar para login após 2 segundos
                 setTimeout(() => {
                     showLoginScreen();
                 }, 2000);
@@ -512,7 +483,6 @@
             }
         }
         
-        // Enviar código de recuperação
         async function enviarCodigo() {
             const email = document.getElementById('recuperar_email').value.trim();
             const errorDiv = document.getElementById('recuperarError');
@@ -530,8 +500,6 @@
                 errorDiv.style.display = 'none';
                 document.getElementById('recuperarEtapa1').style.display = 'none';
                 document.getElementById('recuperarEtapa2').style.display = 'block';
-                
-                // Configurar navegação entre campos de código
                 setupCodeInputs();
             } else {
                 errorDiv.textContent = result.error;
@@ -539,7 +507,6 @@
             }
         }
         
-        // Configurar inputs de código
         function setupCodeInputs() {
             const inputs = document.querySelectorAll('.code-digit');
             inputs.forEach((input, index) => {
@@ -555,7 +522,6 @@
             if (inputs[0]) inputs[0].focus();
         }
         
-        // Verificar código
         async function verificarCodigo() {
             const inputs = document.querySelectorAll('.code-digit');
             const codigo = Array.from(inputs).map(i => i.value).join('');
@@ -579,7 +545,6 @@
             }
         }
         
-        // Alterar senha
         async function alterarSenha() {
             const novaSenha = document.getElementById('nova_senha').value;
             const confirmarSenha = document.getElementById('confirmar_nova_senha').value;
@@ -613,7 +578,7 @@
             
             if (result.success) {
                 errorDiv.style.display = 'none';
-                successDiv.textContent = '✅ Senha alterada com sucesso! Redirecionando para o login...';
+                successDiv.textContent = '✅ Senha alterada com sucesso! Redirecionando...';
                 successDiv.style.display = 'block';
                 
                 setTimeout(() => {
@@ -627,13 +592,13 @@
         }
         
         // ============================================
-        // HOME SCREEN (SELEÇÃO DE FORMULÁRIO)
+        // HOME SCREEN
         // ============================================
         
         function getHomeScreenHTML(user) {
             return `
                 <div class="container">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                         <div>
                             <span style="font-size: 14px; color: #666;">Bem-vindo, <strong>${user.nome_completo || user.nome || user.usuario}</strong></span>
                             <br>
@@ -796,23 +761,16 @@
         }
         
         function showHomeScreen(user) {
-            const loginScreen = document.getElementById('loginScreen');
-            const cadastroScreen = document.getElementById('cadastroScreen');
-            const recuperarScreen = document.getElementById('recuperarScreen');
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('cadastroScreen').style.display = 'none';
+            document.getElementById('recuperarScreen').style.display = 'none';
             const homeScreen = document.getElementById('homeScreen');
-            
-            if (loginScreen) loginScreen.style.display = 'none';
-            if (cadastroScreen) cadastroScreen.style.display = 'none';
-            if (recuperarScreen) recuperarScreen.style.display = 'none';
-            if (homeScreen) {
-                homeScreen.style.display = 'block';
-                homeScreen.innerHTML = getHomeScreenHTML(user);
-                initializeHomeSelection();
-            }
+            homeScreen.style.display = 'block';
+            homeScreen.innerHTML = getHomeScreenHTML(user);
+            initializeHomeSelection();
         }
         
         function startForm(type, service) {
-            const formKey = `${type}-${service}`;
             if (window.loadForm) {
                 window.loadForm(type, service);
             } else {
@@ -824,13 +782,8 @@
         // EVENT LISTENERS
         // ============================================
         
+        // Login
         document.getElementById('loginButton').addEventListener('click', doLogin);
-        document.getElementById('cadastrarButton').addEventListener('click', doCadastro);
-        document.getElementById('enviarCodigoButton').addEventListener('click', enviarCodigo);
-        document.getElementById('verificarCodigoButton').addEventListener('click', verificarCodigo);
-        document.getElementById('alterarSenhaButton').addEventListener('click', alterarSenha);
-        
-        // Enter key no login
         document.getElementById('login_senha').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doLogin();
         });
@@ -838,7 +791,19 @@
             if (e.key === 'Enter') doLogin();
         });
         
-        // Verificar se já está logado
+        // Cadastro - Botões
+        document.getElementById('cadastrarButton').addEventListener('click', doCadastro);
+        document.getElementById('btnVoltarCadastro').addEventListener('click', showLoginScreen);
+        
+        // Recuperar senha - Botões
+        document.getElementById('enviarCodigoButton').addEventListener('click', enviarCodigo);
+        document.getElementById('verificarCodigoButton').addEventListener('click', verificarCodigo);
+        document.getElementById('alterarSenhaButton').addEventListener('click', alterarSenha);
+        document.getElementById('btnVoltarRecuperar1').addEventListener('click', showLoginScreen);
+        document.getElementById('btnVoltarRecuperar2').addEventListener('click', showRecuperarScreen);
+        document.getElementById('btnVoltarRecuperar3').addEventListener('click', showLoginScreen);
+        
+        // Inicializar
         if (isLoggedIn()) {
             const user = getCurrentUser();
             if (user) {
@@ -850,13 +815,16 @@
             showLoginScreen();
         }
         
-        // Tornar funções globais
-        window.doLogout = doLogout;
-        window.verMeusChamados = verMeusChamados;
-        window.startForm = startForm;
+        // Expor funções globalmente
+        window.togglePassword = togglePassword;
+        window.formatarCPF = formatarCPF;
+        window.formatarTelefone = formatarTelefone;
         window.showLoginScreen = showLoginScreen;
         window.showCadastroScreen = showCadastroScreen;
         window.showRecuperarScreen = showRecuperarScreen;
+        window.doLogout = doLogout;
+        window.verMeusChamados = verMeusChamados;
+        window.startForm = startForm;
     </script>
 </body>
 </html>
